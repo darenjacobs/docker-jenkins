@@ -92,12 +92,11 @@ docker service ps registry
 
 # Jenkins Service
 eval $(docker-machine env $swarm_manager)
-mkdir -p docker/jenkins
 docker service create \
   --name jenkins \
   -p ${JENKINS_PORT}:8080 -p 50000:50000 -e JENKINS_OPTS="--prefix=/jenkins" \
   --mount "type=bind,src=/docker/jenkins,dst=/var/jenkins_home" \
-  jenkins:alpine
+  jenkins/jenkins:lts-alpine
 
 docker service ps jenkins
 
@@ -114,6 +113,13 @@ docker-machine ls
 
 docker service ps jenkins
 
+# Swarm plugin
+eval $(docker-machine env $NODE)
+docker build .
+
+# restart jenkins
+eval $(docker-machine env $NODE)
+docker-machine ssh $NODE "sudo service jenkins restart"
 
 # Jenkins Agent
 export USER=admin && export PASSWORD=$secret
