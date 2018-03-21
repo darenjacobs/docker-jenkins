@@ -119,7 +119,8 @@ docker build .
 
 # restart jenkins
 eval $(docker-machine env $NODE)
-docker-machine ssh $NODE "sudo service jenkins restart"
+docker kill $(docker ps -qal)
+sleep 10
 
 # Jenkins Agent
 export USER=admin && export PASSWORD=$secret
