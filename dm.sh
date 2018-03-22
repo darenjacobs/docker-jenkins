@@ -42,7 +42,7 @@ done
 for (( i = 0; i < nodes; i++ ));
 do
   eval $(docker-machine env ${basename}${i})
-  docker-machine ssh ${basename}${i} "sudo mkdir -p /docker/jenkins /docker/workspace /docker/machines && chmod -R 777 /docker && exit"
+  docker-machine ssh ${basename}${i} "sudo mkdir -p /docker/jenkins /docker/workspace /docker/machines && sudo chmod -R 777 /docker && exit"
   docker-machine scp -r $HOME/.docker/machine/machines ${basename}${i}:/docker/machines/
 done
 
@@ -121,8 +121,8 @@ eval $(docker-machine env $NODE)
 docker kill $(docker ps -qal)
 sleep 10
 
-export JENKINS_IP=$(docker-machine ip $swarm_manager)
-MASTER_USER=$USER MASTER_PASS=$secret docker stack deploy -c jenkins-swarm-agent.yml jenkins-agent
+#export JENKINS_IP=$(docker-machine ip $swarm_manager)
+#MASTER_USER=$USER MASTER_PASS=$secret docker stack deploy -c jenkins-swarm-agent.yml jenkins-agent
 
 ## Jenkins Agent - THIS DOES NOT WORK!!!
 #export USER=admin && export PASSWORD=$secret
