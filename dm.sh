@@ -42,8 +42,7 @@ done
 for (( i = 0; i < nodes; i++ ));
 do
   eval $(docker-machine env ${basename}${i})
-  docker-machine ssh ${basename}${i} "sudo mkdir -p /docker/jenkins /docker/workspace /docker/machines"
-  docker-machine ssh ${basename}${i} "sudo chmod -R 777 /docker"
+  docker-machine ssh ${basename}${i} "sudo mkdir -p /docker/jenkins /docker/workspace /docker/machines && chmod -R 777 /docker && exit"
   docker-machine scp -r $HOME/.docker/machine/machines ${basename}${i}:/docker/machines/
 done
 
@@ -122,7 +121,7 @@ eval $(docker-machine env $NODE)
 docker kill $(docker ps -qal)
 sleep 10
 
-# Jenkins Agent
+# Jenkins Agent - THIS DOES NOT WORK!!!
 export USER=admin && export PASSWORD=$secret
 docker service create \
   --name jenkins-agent \
