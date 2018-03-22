@@ -121,13 +121,16 @@ eval $(docker-machine env $NODE)
 docker kill $(docker ps -qal)
 sleep 10
 
-# Jenkins Agent - THIS DOES NOT WORK!!!
-export USER=admin && export PASSWORD=$secret
-docker service create \
-  --name jenkins-agent \
-  -e COMMAND_OPTIONS="master http://$(docker-machine ip $swarm_manager):$JENKINS_PORT \
-  -username $USER -password $PASSWORD -labels 'docker' -executors 2" \
-  --mount "type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock" \
-  --mount "type=bind,src=/docker/workspace,dst=/workspace" \
-  --mount "type=bind,src=/docker/machines,target=/machines" \
-  --mode global vfarcic/jenkins-swarm-agent
+export JENKINS_IP=$(docker-machine ip $swarm_manager)
+MASTER_USER=$USER MASTER_PASS=$secret docker stack deploy -c jenkins-swarm-agent.yml jenkins-agent
+
+## Jenkins Agent - THIS DOES NOT WORK!!!
+#export USER=admin && export PASSWORD=$secret
+#docker service create \
+#  --name jenkins-agent \
+#  -e COMMAND_OPTIONS="master http://$(docker-machine ip $swarm_manager):$JENKINS_PORT \
+#  -username $USER -password $PASSWORD -labels 'docker' -executors 2" \
+#  --mount "type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock" \
+#  --mount "type=bind,src=/docker/workspace,dst=/workspace" \
+#  --mount "type=bind,src=/docker/machines,target=/machines" \
+#  --mode global vfarcic/jenkins-swarm-agent
