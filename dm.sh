@@ -88,7 +88,7 @@ docker service create \
   --name jenkins \
   -p ${JENKINS_PORT}:8080 -p 50000:50000 -e JENKINS_OPTS="--prefix=/jenkins" \
   --mount "type=bind,src=/docker/jenkins,dst=/var/jenkins_home" \
-  jenkins:alpine
+  jenkins:lts
 
 docker service ps jenkins
 
