@@ -88,7 +88,12 @@ docker node ls
 
 # Jenkins Service
 eval $(docker-machine env $swarm_manager)
-docker stack deploy -c docker-compose.yml jenkins
+docker service create \
+  --name jenkins \
+  -p ${JENKINS_PORT}:8080 -p 50000:50000 -e JENKINS_OPTS="--prefix=/jenkins" \
+  --mount "type=bind,src=/docker/jenkins,dst=/var/jenkins_home" \
+  jenkinsci/jenkins:lts
+
 docker service ps jenkins
 
 sleep 10
