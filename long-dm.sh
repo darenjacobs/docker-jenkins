@@ -2,7 +2,7 @@
 # # # NOTES # # #
 # The keypair is created by docker-machine and put in ~/.docker/machine/machines/$MACHINE_NAME/id_rsa
 # Delete this keypair when done
-# the security group ID (sg-*) does not work.  Must use the name
+# the security group ID does not work.  Have to use the name
 
 set -euf -o pipefail
 
@@ -13,8 +13,8 @@ else
   exit 0
 fi
 
-JENKINS_PORT=8080
-VIZ_PORT=80
+JENKINS_PORT=8082
+VIZ_PORT=8083
 SWARM_PORT=2377
 basename=aws-
 swarm_manager=""
@@ -82,6 +82,37 @@ docker service create \
 
 docker node ls
 
+# Registry
+eval $(docker-machine env $swarm_manager)
+docker service create \
+  --name registry \
+  -p 5000:5000 \
+  --mount "type=bind,src=/docker,dst=/var/lib/registry" \
+  --reserve-memory 100m registry
+
+docker service ps registry
+
+
+# Create services
+docker network create --driver overlay proxy
+docker network create --driver overlay go-demo
+docker network ls
+docker service create --name go-demo-db --network go-demo mongo
+docker service ls
+
+docker service create --name go-demo -e DB=go-demo-db \
+  --network go-demo --network proxy vfarcic/go-demo
+docker service ps go-demo
+
+docker service create --name proxy \
+  -p 80:80 -p 443:443 -p 8080:8080 --network proxy \
+  -e MODE=swarm vfarcic/docker-flow-proxy
+
+docker service ps proxy
+
+curl "$(docker-machine ip $swarm_manager):8080/v1/docker-flow-proxy/reconfigure?serviceName=go-demo&servicePath=/demo&port=8080"
+curl -i $(docker-machine ip $swarm_manager)/demo/hello
+
 # Jenkins Service
 eval $(docker-machine env $swarm_manager)
 docker service create \
@@ -106,9 +137,34 @@ docker-machine ls
 docker service ps jenkins
 
 echo $secret
-# Pause to install plugins - TODO: automate plugin installaion
+# Pause to install plugins - need to automae plugin installaion
 echo "LOG IN TO JENKINS and install Plugins"
 read -p "Press Enter to continue"
+
+# Agent swarm
+docker-machine -D create --driver amazonec2 \
+  --amazonec2-access-key $AWS_SECRET_KEY_ID \
+  --amazonec2-secret-key $AWS_SECRET_ACCESS_KEY \
+  --amazonec2-region $AWS_DEFAULT_REGION \
+  --amazonec2-zone $AWS_AVAILABILITY_ZONE \
+  --amazonec2-vpc-id $AWS_VPC_ID \
+  --amazonec2-subnet-id $AWS_SUBNET_ID \
+  --amazonec2-security-group $AWS_SECURITY_GROUP \
+  aws-test-0 ;
+
+docker-machine ssh aws-test-0 "sudo mkdir -p /docker/workspace && sudo chown -R 777 /docker && exit"
+
+eval $(docker-machine env aws-test-0)
+
+docker swarm init --advertise-addr $(docker-machine ip aws-test-0)
+
+docker run --name visualizer -d \
+  -p ${VIZ_PORT}:8080 \
+  -e HOST=$(docker-machine ip aws-test-0) \
+  -e PORT=${VIZ_PORT} \
+  -v /var/run/docker.sock:/var/run/docker.sock \
+  dockersamples/visualizer
+
 
 # Jenkins Agent
 export USER=admin && export PASSWORD=$secret
@@ -120,3 +176,7 @@ docker service create \
   --mount "type=bind,src=/docker/workspace,dst=/workspace" \
   --mount "type=bind,src=/docker/machines,target=/machines" \
   --mode global vfarcic/jenkins-swarm-agent
+
+#export JENKINS_IP=$(docker-machine ip $swarm_manager)
+#MASTER_USER=$USER MASTER_PASS=$secret docker stack deploy -c jenkins-swarm-agent.yml jenkins-agent
+
