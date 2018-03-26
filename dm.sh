@@ -133,6 +133,6 @@ docker service create \
 
 
 clear
-echo $secret
-echo "Visualizer: http://$swarm_manager"
-echo "Jenkins: http://${swarm_manager}:8080/jenkins"
+echo "Visualizer: http://$swarm_manager_ip"
+echo "Jenkins: http://${swarm_manager_ip}:8080/jenkins"
+echo "Jenkins login password: $secret"
