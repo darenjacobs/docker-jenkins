@@ -86,28 +86,39 @@ docker service create \
 
 docker node ls
 
+eval $(docker-machine env $swarm_manager)
+docker service create \
+  --name registry \
+  -p 5000:5000 \
+  --mount "type=bind,src=/docker,dst=/var/lib/registry" \
+  --reserve-memory 100m registry
+
+docker service ps registry
+
+
 # Jenkins Service
 eval $(docker-machine env $swarm_manager)
-docker stack deploy -c docker-compose.yml jenkins
-docker service ps jenkins
+export swarm_manager_ip=$(docker-machine ip $swarm_manager)
+docker-compose up -d
 
-sleep 10
+echo "DOCKER COMPOSE PS"
+docker-compose ps
+
+docker-compose push || true
+
+docker stack deploy -c docker-compose.yml jenkins
+
+echo "DOCKER SERVICE PS"
+docker service ps jenkins_jenkins
+sleep 20
 
 # Get Docker admin password && make Docker fault tolerant
 eval $(docker-machine env $swarm_manager)
 sleep 20
-NODE=$(docker service ps -f desired-state=running jenkins | tail -1 | awk '{print $4}')
+NODE=$(docker service ps -f desired-state=running jenkins_jenkins | tail -1 | awk '{print $4}')
 eval $(docker-machine env $NODE)
 file=$(docker-machine ssh $NODE "sudo find /docker/jenkins -name 'initialAdminPassword'")
 secret=$(docker-machine ssh $NODE "sudo cat $file")
-docker-machine ls
-
-docker service ps jenkins
-
-echo $secret
-# Pause to install plugins - TODO: automate plugin installaion
-echo "LOG IN TO JENKINS and install Plugins"
-read -p "Press Enter to continue"
 
 # Jenkins Agent
 export USER=admin && export PASSWORD=$secret
@@ -119,3 +130,9 @@ docker service create \
   --mount "type=bind,src=/docker/workspace,dst=/workspace" \
   --mount "type=bind,src=/docker/machines,target=/machines" \
   --mode global vfarcic/jenkins-swarm-agent
+
+
+clear
+echo $secret
+echo "Visualizer: http://$swarm_manager"
+echo "Jenkins: http://${swarm_manager}:8080/jenkins"

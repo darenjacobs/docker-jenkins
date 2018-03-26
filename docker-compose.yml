@@ -1,7 +1,7 @@
-version: '3'
+version: '3.3'
 services:
   jenkins:
-    image: jenkins/jenkins:lts
+    image: ${swarm_manager_ip}:5000/jenkins
     build: .
     ports:
       - '8080:8080'
