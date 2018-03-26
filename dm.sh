@@ -47,6 +47,10 @@ do
   docker-machine ssh ${basename}${i} "sudo mkdir -p /docker/jenkins /docker/workspace /docker/machines \
     && sudo chmod -R 777 /docker && exit"
   docker-machine scp -r $HOME/.docker/machine/machines ${basename}${i}:/docker/machines/
+
+  # Install maven and Git
+  docker-machine ssh ${basename}${i} "apt-cache search maven && sudo apt-get install maven git -y && exit"
+
 done
 
 # Initialize the swarm
@@ -84,12 +88,7 @@ docker node ls
 
 # Jenkins Service
 eval $(docker-machine env $swarm_manager)
-docker service create \
-  --name jenkins \
-  -p ${JENKINS_PORT}:8080 -p 50000:50000 -e JENKINS_OPTS="--prefix=/jenkins" \
-  --mount "type=bind,src=/docker/jenkins,dst=/var/jenkins_home" \
-  jenkins:lts
-
+docker stack deploy -c docker-compose.yml jenkins
 docker service ps jenkins
 
 sleep 10
