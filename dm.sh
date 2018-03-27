@@ -6,6 +6,8 @@
 
 set -euo pipefail
 
+start=$(date +%s)
+
 JENKINS_PORT=8080
 VIZ_PORT=80
 SWARM_PORT=2377
@@ -79,7 +81,7 @@ elif [ $1 == "azure" ] ; then
   func_azure
 else
   echo "Invalid argument."
-  echo "usage: ./$0 [aws | azure]"
+  echo "Usage: $0 [aws | azure]"
   exit 1
 fi
 
@@ -116,8 +118,6 @@ do
     $(docker-machine ip $swarm_manager):$SWARM_PORT
 done
 
-sleep 10
-
 # Install Docker visualizer on Swarm manager
 eval $(docker-machine env $swarm_manager)
 docker service create \
@@ -153,11 +153,10 @@ docker stack deploy -c docker-compose.yml jenkins
 
 echo "DOCKER SERVICE PS"
 docker service ps jenkins_jenkins
-sleep 20
 
 # Get Docker admin password && make Docker fault tolerant
 eval $(docker-machine env $swarm_manager)
-sleep 20
+sleep 30
 NODE=$(docker service ps -f desired-state=running jenkins_jenkins | tail -1 | awk '{print $4}')
 eval $(docker-machine env $NODE)
 file=$(docker-machine ssh $NODE "sudo find /docker/jenkins -name 'initialAdminPassword'")
@@ -179,3 +178,7 @@ clear
 echo "Visualizer: http://$swarm_manager_ip"
 echo "Jenkins: http://${swarm_manager_ip}:8080/jenkins"
 echo "Jenkins login password: $secret"
+end=$(date +%s)
+runtime=$(python -c "print '%u:%02u' % ((${end} - ${start})/60, (${end} - ${start})%60)")
+
+echo "Runtime: $runtime"
