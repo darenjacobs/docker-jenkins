@@ -4,41 +4,84 @@
 # Delete this keypair when done
 # the security group ID (sg-*) does not work.  Must use the name
 
-set -euf -o pipefail
-
-if [ -f aws-creds.sh ]; then
-  source aws-creds.sh
-else
-  echo "AWS credentials file not found"
-  exit 0
-fi
+set -euo pipefail
 
 JENKINS_PORT=8080
 VIZ_PORT=80
 SWARM_PORT=2377
-basename=aws-
 swarm_manager=""
 nodes=3
 
-# Create docker cluster, set first one as manager
-for (( i = 0; i < nodes; i++ ));
-do
-  docker-machine -D create --driver amazonec2 \
-    --amazonec2-access-key $AWS_SECRET_KEY_ID \
-    --amazonec2-secret-key $AWS_SECRET_ACCESS_KEY \
-    --amazonec2-region $AWS_DEFAULT_REGION \
-    --amazonec2-zone $AWS_AVAILABILITY_ZONE \
-    --amazonec2-vpc-id $AWS_VPC_ID \
-    --amazonec2-subnet-id $AWS_SUBNET_ID \
-    --amazonec2-security-group $AWS_SECURITY_GROUP \
-    ${basename}${i} ;
+func_aws(){
 
-  # Set the first node to the swarm manager
-  if [ -z $swarm_manager ];
-  then
-    swarm_manager=${basename}${i}
+  if [ -f aws-creds.sh ]; then
+    source aws-creds.sh
+  else
+    echo "AWS credentials file not found"
+    exit 1
   fi
-done
+
+  basename=aws-
+
+  # Create docker cluster, set first one as manager
+  for (( i = 0; i < nodes; i++ ));
+  do
+    docker-machine -D create --driver amazonec2 \
+      --amazonec2-access-key $AWS_SECRET_KEY_ID \
+      --amazonec2-secret-key $AWS_SECRET_ACCESS_KEY \
+      --amazonec2-region $AWS_DEFAULT_REGION \
+      --amazonec2-zone $AWS_AVAILABILITY_ZONE \
+      --amazonec2-vpc-id $AWS_VPC_ID \
+      --amazonec2-subnet-id $AWS_SUBNET_ID \
+      --amazonec2-security-group $AWS_SECURITY_GROUP \
+      ${basename}${i} ;
+
+    func_swarm_mgr
+  done
+}
+
+func_azure() {
+
+  if [ -f azr-creds.sh ]; then
+    source azr-creds.sh
+  else
+    echo "Azure credentials file not found"
+    exit 1
+  fi
+
+  basename=azr-
+
+  # Create docker cluster, set first one as manager
+  for (( i = 0; i < nodes; i++ ));
+  do
+    docker-machine -D create --driver azure \
+      --azure-subscription-id $SUB_ID \
+      --azure-size $AZURE_SIZE \
+      --azure-location $AZURE_LOCATION \
+      ${basename}${i}
+
+    func_swarm_mgr
+  done
+}
+
+func_swarm_mgr() {
+
+    # Set the first node to the swarm manager
+    if [ -z $swarm_manager ];
+    then
+      swarm_manager=${basename}${i}
+    fi
+}
+
+if [ $1 == "aws" ]; then
+  func_aws
+elif [ $1 == "azure" ] ; then
+  func_azure
+else
+  echo "Invalid argument."
+  echo "usage: ./$0 [aws | azure]"
+  exit 1
+fi
 
 # Create Docker directories on nodes, src is not my local machine, but the docker-machine
 for (( i = 0; i < nodes; i++ ));
