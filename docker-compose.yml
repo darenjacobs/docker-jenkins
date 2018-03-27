@@ -13,4 +13,3 @@ services:
       - /docker/jenkins:/var/jenkins_home
     environment:
       JENKINS_OPTS: --prefix=/jenkins
-
