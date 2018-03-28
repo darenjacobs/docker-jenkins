@@ -177,7 +177,7 @@ docker service create \
 clear
 echo "Visualizer: http://$swarm_manager_ip"
 echo "Jenkins: http://${swarm_manager_ip}:8080/jenkins"
-echo "Jenkins login password: $secret"
+echo "Jenkins password: $secret"
 end=$(date +%s)
 runtime=$(python -c "print '%u:%02u' % ((${end} - ${start})/60, (${end} - ${start})%60)")
 
