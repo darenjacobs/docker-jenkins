@@ -94,7 +94,12 @@ do
   docker-machine scp -r $HOME/.docker/machine/machines ${basename}${i}:/docker/machines/
 
   # Install maven and Git
-  docker-machine ssh ${basename}${i} "apt-cache search maven && sudo apt-get install maven git -y && exit"
+  docker-machine ssh ${basename}${i} "apt-cache search maven && sudo apt-get install -y \
+    maven \
+    git \
+    default-jre \
+    default-jdk \
+    && sudo update-alternatives --config java && exit"
 
 done
 
@@ -156,7 +161,7 @@ docker service ps jenkins_jenkins
 
 # Get Docker admin password && make Docker fault tolerant
 eval $(docker-machine env $swarm_manager)
-sleep 30
+sleep 45
 NODE=$(docker service ps -f desired-state=running jenkins_jenkins | tail -1 | awk '{print $4}')
 eval $(docker-machine env $NODE)
 file=$(docker-machine ssh $NODE "sudo find /docker/jenkins -name 'initialAdminPassword'")
