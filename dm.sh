@@ -26,10 +26,10 @@ func_aws(){
   basename=aws-
 
   # Create docker cluster, set first one as manager
+      #--amazonec2-use-private-address \
   for (( i = 0; i < nodes; i++ ));
   do
     docker-machine -D create --driver amazonec2 \
-      --amazonec2-use-private-address \
       --amazonec2-access-key $AWS_SECRET_KEY_ID \
       --amazonec2-secret-key $AWS_SECRET_ACCESS_KEY \
       --amazonec2-region $AWS_DEFAULT_REGION \
@@ -46,13 +46,10 @@ func_aws(){
   for (( i = 0; i < nodes; i++ ));
   do
     eval $(docker-machine env ${basename}${i})
-    docker-machine ssh ${basename}${i} "sudo apt-get install -y nfs-common"
-    docker-machine ssh ${basename}${i} "sudo mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 ${AWS_EFS_ID}.efs.${AWS_DEFAULT_REGION}.amazonaws.com:/ /docker"
+    docker-machine ssh ${basename}${i} "sudo apt-get install -y nfs-common && \
+      sudo mkdir /docker && \
+      sudo mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 ${AWS_EFS_ID}.efs.${AWS_DEFAULT_REGION}.amazonaws.com:/ /docker && exit"
   done
-
-  # Create EFS volume - https://docs.docker.com/docker-for-aws/persistent-data-volumes/#share-the-same-volume-among-tasks-using-efs
-  eval $(docker-machine env ${swarm_manager})
-  docker-machine ssh ${swarm_manager} 'sudo docker volume create -d "cloudstor:aws" --opt backing=shared docker'
 }
 
 func_azure() {
@@ -104,7 +101,7 @@ do
   eval $(docker-machine env ${basename}${i})
   docker-machine ssh ${basename}${i} "sudo usermod -aG docker ubuntu"
   docker-machine ssh ${basename}${i} "sudo mkdir -p /docker/jenkins /docker/workspace /docker/machines \
-    && sudo chmod -R 777 /docker && exit"
+    && sudo chgrp -R ubuntu /docker && sudo chmod -R 770 /docker && exit"
   docker-machine scp -r $HOME/.docker/machine/machines ${basename}${i}:/docker/machines/
 
   # Install maven and Git
@@ -113,7 +110,7 @@ do
     git \
     default-jre \
     default-jdk \
-    && sudo update-alternatives --config java && exit"
+    && exit"
 
 done
 
