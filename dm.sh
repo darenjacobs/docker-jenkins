@@ -70,6 +70,7 @@ func_azure() {
       --azure-subscription-id $SUB_ID \
       --azure-size $AZURE_SIZE \
       --azure-location $AZURE_LOCATION \
+      --azure-ssh-user $AZURE_SSH_USER \
       ${basename}${i}
 
     func_swarm_mgr
@@ -102,7 +103,6 @@ do
   docker-machine ssh ${basename}${i} "sudo usermod -aG docker ubuntu"
   docker-machine ssh ${basename}${i} "sudo mkdir -p /docker/jenkins /docker/workspace /docker/machines \
     && sudo chown -R ubuntu /docker \
-    && sudo chmod -R 770 /docker \
     && exit"
   docker-machine scp -r $HOME/.docker/machine/machines ${basename}${i}:/docker/machines/
 
