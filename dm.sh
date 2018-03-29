@@ -101,7 +101,9 @@ do
   eval $(docker-machine env ${basename}${i})
   docker-machine ssh ${basename}${i} "sudo usermod -aG docker ubuntu"
   docker-machine ssh ${basename}${i} "sudo mkdir -p /docker/jenkins /docker/workspace /docker/machines \
-    && sudo chgrp -R ubuntu /docker && sudo chmod -R 770 /docker && exit"
+    && sudo chown -R ubuntu /docker \
+    && sudo chmod -R 770 /docker \
+    && exit"
   docker-machine scp -r $HOME/.docker/machine/machines ${basename}${i}:/docker/machines/
 
   # Install maven and Git
