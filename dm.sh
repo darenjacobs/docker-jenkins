@@ -48,7 +48,9 @@ func_aws(){
     eval $(docker-machine env ${basename}${i})
     docker-machine ssh ${basename}${i} "sudo apt-get install -y nfs-common && \
       sudo mkdir /docker && \
-      sudo mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 ${AWS_EFS_ID}.efs.${AWS_DEFAULT_REGION}.amazonaws.com:/ /docker && exit"
+      sudo mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 ${AWS_EFS_ID}.efs.${AWS_DEFAULT_REGION}.amazonaws.com:/ /docker && \
+      sudo echo \"${AWS_EFS_ID}.efs.${AWS_DEFAULT_REGION}.amazonaws.com:/ /docker  nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 0 0\" >> /etc/fstab && \
+      exit"
   done
 }
 
