@@ -121,6 +121,7 @@ docker-machine env $swarm_manager
 eval $(docker-machine env $swarm_manager)
 docker swarm init --advertise-addr $(docker-machine ip $swarm_manager)
 docker-machine ls
+docker node ls
 
 
 # Join the nodes to the swarm
@@ -133,7 +134,8 @@ do
 
   docker swarm join --token $TOKEN \
     --advertise-addr $(docker-machine ip ${basename}${i}) \
-    $(docker-machine ip $swarm_manager):$SWARM_PORT
+    $(docker-machine ip $swarm_manager):$SWARM_PORT || true # For Azure because it's so bloody slow
+  sleep 10
 done
 
 # Install Docker visualizer on Swarm manager
@@ -145,7 +147,7 @@ docker service create \
   --mount=type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock \
   dockersamples/visualizer
 
-docker node ls
+docker service ps viz
 
 eval $(docker-machine env $swarm_manager)
 docker service create \
@@ -165,7 +167,7 @@ docker-compose up -d
 echo "DOCKER COMPOSE PS"
 docker-compose ps
 
-docker-compose push || true
+docker-compose push || true # expected http error
 
 docker stack deploy -c docker-compose.yml jenkins
 
