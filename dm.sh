@@ -49,8 +49,9 @@ func_aws(){
     docker-machine ssh ${basename}${i} "sudo apt-get install -y nfs-common && \
       sudo mkdir /docker && \
       sudo mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 ${AWS_EFS_ID}.efs.${AWS_DEFAULT_REGION}.amazonaws.com:/ /docker && \
-      sudo rm -rf /docker/* && \
+      sudo chmod o+w /etc/fstab && \
       sudo echo '${AWS_EFS_ID}.efs.${AWS_DEFAULT_REGION}.amazonaws.com:/ /docker  nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 0 0' >> /etc/fstab && \
+      sudo chmod o-w /etc/fstab && \
       exit"
   done
 }
@@ -179,7 +180,7 @@ docker service ps jenkins_jenkins
 
 # Get Docker admin password && make Docker fault tolerant
 eval $(docker-machine env $swarm_manager)
-sleep 60
+sleep 120
 NODE=$(docker service ps -f desired-state=running jenkins_jenkins | tail -1 | awk '{print $4}')
 eval $(docker-machine env $NODE)
 file=$(docker-machine ssh $NODE "sudo find /docker/jenkins -name 'initialAdminPassword'")
