@@ -64,7 +64,7 @@ func_aws(){
   docker-machine ssh $swarm_manager "sudo mkdir -p /docker/jenkins /docker/workspace /docker/machines && \
     sudo chown -R ubuntu /docker  && \
     exit"
-  docker-machine scp -r $HOME/.docker/machine/machines ${swarm_manager}:/docker/machines/
+  docker-machine scp -r $HOME/.docker/machine/machines/* ${swarm_manager}:/docker/machines/
 
 }
 
@@ -100,7 +100,7 @@ func_azure() {
     docker-machine ssh ${basename}${i} "sudo mkdir -p /docker/jenkins /docker/workspace /docker/machines  && \
       sudo chown -R ubuntu /docker && \
       exit"
-    docker-machine scp -r $HOME/.docker/machine/machines ${basename}${i}:/docker/machines/
+    docker-machine scp -r $HOME/.docker/machine/machines/* ${basename}${i}:/docker/machines/
   done
 
 }
