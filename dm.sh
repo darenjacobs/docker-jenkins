@@ -61,10 +61,10 @@ func_aws(){
   # Using one node (swarm manager) set up the docker directory which is shared by all docker machines
   echo "Configuring docker directory using swarm manager $swarm_manager"
   eval $(docker-nachine env $swarm_manager)
-  docker-machine ssh $swarm_manager "sudo mkdir -p /docker/jenkins /docker/workspace /docker/machines && \
+  docker-machine ssh $swarm_manager "sudo mkdir -p /docker/jenkins /docker/workspace && \
     sudo chown -R ubuntu /docker  && \
     exit"
-  docker-machine scp -r $HOME/.docker/machine/machines/* ${swarm_manager}:/docker/machines/
+  docker-machine scp -r $HOME/.docker/machine/machines ${swarm_manager}:/docker
 
 }
 
@@ -97,10 +97,10 @@ func_azure() {
   for (( i = 0; i < nodes; i++ ));
   do
     eval $(docker-machine env ${basename}${i})
-    docker-machine ssh ${basename}${i} "sudo mkdir -p /docker/jenkins /docker/workspace /docker/machines  && \
+    docker-machine ssh ${basename}${i} "sudo mkdir -p /docker/jenkins /docker/workspace && \
       sudo chown -R ubuntu /docker && \
       exit"
-    docker-machine scp -r $HOME/.docker/machine/machines/* ${basename}${i}:/docker/machines/
+    docker-machine scp -r $HOME/.docker/machine/machines ${basename}${i}:/docker
   done
 
 }
