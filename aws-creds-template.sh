@@ -7,3 +7,4 @@ export AWS_AVAILABILITY_ZONE=
 export AWS_VPC_ID=
 export AWS_SUBNET_ID=
 export AWS_SECURITY_GROUP=
+export AWS_EFS_ID=

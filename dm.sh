@@ -42,7 +42,7 @@ func_aws(){
     func_swarm_mgr
   done
 
-  # Mount EFS volume - TODO: edit /etc/fstab
+  # Mount EFS volume on all docker machines
   for (( i = 0; i < nodes; i++ ));
   do
     eval $(docker-machine env ${basename}${i})
@@ -54,6 +54,14 @@ func_aws(){
       sudo chmod o-w /etc/fstab && \
       exit"
   done
+
+  # Using one node (swarm manager) set up the docker directory which is shared by all docker machines
+  eval $(docker-achine env $swarm_manager)
+  docker-machine ssh $swarm_manager "sudo mkdir -p /docker/jenkins /docker/workspace /docker/machines \
+    && sudo chown -R ubuntu /docker \
+    && exit"
+  docker-machine scp -r $HOME/.docker/machine/machines ${basename}${i}:/docker/machines/
+
 }
 
 func_azure() {
@@ -79,6 +87,16 @@ func_azure() {
 
     func_swarm_mgr
   done
+
+  for (( i = 0; i < nodes; i++ ));
+  do
+    eval $(docker-machine env ${basename}${i})
+    docker-machine ssh ${basename}${i} "sudo mkdir -p /docker/jenkins /docker/workspace /docker/machines \
+      && sudo chown -R ubuntu /docker \
+      && exit"
+    docker-machine scp -r $HOME/.docker/machine/machines ${basename}${i}:/docker/machines/
+  done
+
 }
 
 func_swarm_mgr() {
@@ -104,11 +122,9 @@ fi
 for (( i = 0; i < nodes; i++ ));
 do
   eval $(docker-machine env ${basename}${i})
+
+  # enable ubuntu user to run docker commands
   docker-machine ssh ${basename}${i} "sudo usermod -aG docker ubuntu"
-  docker-machine ssh ${basename}${i} "sudo mkdir -p /docker/jenkins /docker/workspace /docker/machines \
-    && sudo chown -R ubuntu /docker \
-    && exit"
-  docker-machine scp -r $HOME/.docker/machine/machines ${basename}${i}:/docker/machines/
 
   # Install maven and Git
   docker-machine ssh ${basename}${i} "apt-cache search maven && sudo apt-get install -y \
@@ -121,7 +137,6 @@ do
 done
 
 # Initialize the swarm
-docker-machine env $swarm_manager
 eval $(docker-machine env $swarm_manager)
 docker swarm init --advertise-addr $(docker-machine ip $swarm_manager)
 docker-machine ls
