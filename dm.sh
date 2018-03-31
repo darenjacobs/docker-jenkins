@@ -210,12 +210,13 @@ docker service ps jenkins_jenkins
 # Get Docker admin password && make Docker fault tolerant
 echo "get Admin password"
 eval $(docker-machine env $swarm_manager)
-sleep 120
+sleep 240
 NODE=$(docker service ps -f desired-state=running jenkins_jenkins | tail -1 | awk '{print $4}')
 eval $(docker-machine env $NODE)
 file=$(docker-machine ssh $NODE "sudo find /docker/jenkins -name 'initialAdminPassword'")
 while [ -z $file ]
 do
+  sleep 20
   file=$(docker-machine ssh $NODE "sudo find /docker/jenkins -name 'initialAdminPassword'")
 done
 secret=$(docker-machine ssh $NODE "sudo cat $file")
