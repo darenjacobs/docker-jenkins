@@ -8,6 +8,7 @@ set -euo pipefail
 
 start=$(date +%s)
 
+cloud_provider=$1
 JENKINS_PORT=8080
 VIZ_PORT=80
 SWARM_PORT=2377
@@ -114,9 +115,9 @@ func_swarm_mgr() {
     fi
 }
 
-if [ $1 == "aws" ]; then
+if [ $cloud_provider == "aws" ]; then
   func_aws
-elif [ $1 == "azure" ] ; then
+elif [ $cloud_provider == "azure" ] ; then
   func_azure
 else
   echo "Invalid argument."
@@ -159,10 +160,12 @@ do
   eval $(docker-machine env ${basename}${i})
   docker-machine ls
 
-  docker swarm join --token $TOKEN \
-    --advertise-addr $(docker-machine ip ${basename}${i}) \
-    $(docker-machine ip $swarm_manager):$SWARM_PORT || true # For Azure because it's so bloody slow
-  sleep 10
+  if [ $cloud_provider == "azure"]; then
+    docker swarm join --token $TOKEN -- advertise-addr $(docker-machine ip ${basename}${i}) $(docker-machine ip $swarm_manager):$SWARM_PORT || true
+    sleep 10
+  else
+    docker swarm join --token $TOKEN --advertise-addr $(docker-machine ip ${basename}${i}) $(docker-machine ip $swarm_manager):$SWARM_PORT
+  fi
 done
 
 # Install Docker visualizer on Swarm manager
@@ -207,7 +210,7 @@ docker service ps jenkins_jenkins
 # Get Docker admin password && make Docker fault tolerant
 echo "get Admin password"
 eval $(docker-machine env $swarm_manager)
-sleep 120
+sleep 60
 NODE=$(docker service ps -f desired-state=running jenkins_jenkins | tail -1 | awk '{print $4}')
 eval $(docker-machine env $NODE)
 file=$(docker-machine ssh $NODE "sudo find /docker/jenkins -name 'initialAdminPassword'")
