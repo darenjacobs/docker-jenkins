@@ -160,7 +160,7 @@ do
   eval $(docker-machine env ${basename}${i})
   docker-machine ls
 
-  if [ $cloud_provider == "azure"]; then
+  if [ $cloud_provider == "azure" ]; then
     docker swarm join --token $TOKEN -- advertise-addr $(docker-machine ip ${basename}${i}) $(docker-machine ip $swarm_manager):$SWARM_PORT || true
     sleep 10
   else
