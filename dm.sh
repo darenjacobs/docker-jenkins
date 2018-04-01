@@ -24,7 +24,7 @@ func_aws(){
     exit 1
   fi
 
-  basename=lx-dkrctrld
+  basename=lx-dkrc
 
   # Create docker cluster, set first one as manager
       #--amazonec2-use-private-address \
