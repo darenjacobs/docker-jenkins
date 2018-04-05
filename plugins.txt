@@ -1,9 +1,11 @@
 active-directory
+analysis-core
 ansible
 antisamy-markup-formatter
 artifactory
 bitbucket
 blueocean
+blueocean-jira
 build-timeout
 checkstyle
 command-launcher
