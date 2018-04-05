@@ -8,8 +8,8 @@ services:
       - '50000:50000'
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - /docker/workspace:/workspace
-      - /docker/machines:/machines
-      - /docker/jenkins:/var/jenkins_home
+      - ${workspace_dir}:/workspace
+      - ${machines_dir}:/machines
+      - ${jenkins_dir}:/var/jenkins_home
     environment:
       JENKINS_OPTS: --prefix=/jenkins
