@@ -251,6 +251,7 @@ docker service create \
   --name jenkins-agent \
   -e COMMAND_OPTIONS="-master http://$(docker-machine ip $swarm_manager):$JENKINS_PORT/jenkins \
   -username $USER -password $PASSWORD -labels 'docker' -executors 20 -fsroot /workspace" \
+  -e JAVA_HOME="/usr/lib/jvm/default-jvm/jre" \
   --mount "type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock" \
   --mount "type=bind,src=${workspace_dir},dst=/workspace" \
   --mount "type=bind,src=${machines_dir},target=/machines" \
@@ -260,11 +261,9 @@ docker service create \
 echo "Install maven on Jenkins-swarm-agents"
 for (( i = 0; i < nodes; i++ ));
 do
-  eval $(docker-machine env ${basename}${i})
-
   # enable ubuntu user to run docker commands
-  docker-machine ssh ${basename}${i} "tainer=$(docker ps |grep agent |tail -1 |awk '{print $1}') ; docker exec -it $tainer apk --update add maven"
-
+  eval $(docker-machine env ${basename}${i})
+  tainer=$(docker ps |grep agent |tail -1 |awk '{print $1}') ; docker exec -it $tainer apk --update add maven
 done
 
 clear
