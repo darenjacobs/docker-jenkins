@@ -231,7 +231,7 @@ docker service create \
   --mount "type=bind,src=/var/run/docker.sock,dst=/var/run/docker.sock" \
   --mount "type=bind,src=/docker/workspace,dst=/workspace" \
   --mount "type=bind,src=/docker/machines,target=/machines" \
-  --mode global vfarcic/jenkins-swarm-agent
+  --mode global darenjacobs/jenkins-swarm-agent:0.01
 
 
 clear
