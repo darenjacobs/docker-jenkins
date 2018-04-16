@@ -185,8 +185,9 @@ do
   eval $(docker-machine env ${basename}${i})
   docker-machine ls
 
-  if [ $cloud_provider == "azure" ]; then #Azure is slow
-    docker swarm join --token $TOKEN -- advertise-addr $(docker-machine ip ${basename}${i}) $(docker-machine ip $swarm_manager):$SWARM_PORT || true
+
+  if [ $cloud_provider == "azure" ]; then
+    docker swarm join --token $TOKEN --advertise-addr $(docker-machine ip ${basename}${i}) $(docker-machine ip $swarm_manager):$SWARM_PORT || true
     sleep 10
   else
     docker swarm join --token $TOKEN --advertise-addr $(docker-machine ip ${basename}${i}) $(docker-machine ip $swarm_manager):$SWARM_PORT
@@ -265,6 +266,7 @@ docker service create \
   --mount "type=bind,src=${workspace_dir},dst=/workspace" \
   --mount "type=bind,src=${machines_dir},target=/machines" \
   --mode global darenjacobs/jenkins-swarm-agent:0.04
+
 
 # Display / Log access info
 if ! [ -f Docker-info.txt ]; then
