@@ -2,7 +2,7 @@
 
 # tag nodes in which key / value pairs contain spaces
 func_tag_instances() {
-  TAGS="'Key=\"Application or Purpose\",Value=\"DevOps Docker POC\"' 'Key=\"Cost Center\",Value=723'"
+  TAGS=""
   nodes=$(docker-machine ls | awk 'NR > 1 {print $1}')
   for node in $nodes
   do
