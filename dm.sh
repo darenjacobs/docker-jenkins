@@ -93,6 +93,7 @@ func_aws(){
       exit"
   done
 
+  MAKE THIS A FUNCTION USE IT WITH BOTH
   # Using one node (swarm manager) set up the docker directory which is shared by all docker machines
   echo "Configuring docker directory using swarm manager $swarm_manager"
   eval $(docker-machine env $swarm_manager)
@@ -133,6 +134,20 @@ func_azure() {
       ${basename}${i}
 
     func_swarm_mgr
+  done
+
+  # Mount EFS volume on all docker machines
+  echo "Mounting up EFS Volume on all docker machines"
+  for (( i = 0; i < nodes; i++ ));
+  do
+    eval $(docker-machine env ${basename}${i})
+    docker-machine ssh ${basename}${i} "sudo apt-get install -y cifs-utils nfs-common && \
+      sudo mkdir ${root_dir} && \
+      sudo mount -t cifs ${AZURE_CIFS} ${root_dir} -o vers=3.0,username=${AZURE_MOUNT_USER},password=${AZURE_MOUNT_PASS},dir_mode=0777,file_mode=0777,sec=ntlmssp
+      sudo chmod o+w /etc/fstab && \
+      sudo echo '${AZURE_CIFS} ${root_dir} cifs -o vers=3.0,username=${AZURE_MOUNT_USER},password=${AZURE_MOUNT_PASS},dir_mode=0777,file_mode=0777,sec=ntlmssp' >> /etc/fstab && \
+      sudo chmod o-w /etc/fstab && \
+      exit"
   done
 
   echo "Creating Docker directory on all nodes"
