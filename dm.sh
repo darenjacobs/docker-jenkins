@@ -10,6 +10,7 @@ VIZ_PORT=80
 SWARM_PORT=2377
 swarm_manager=""
 nodes=${num_nodes:-3}
+AWS_AVAILABILITY_ZONE=${AWS_AVAILABILITY_ZONE:-} # this bothers me but set dirs func breaks Azure func
 
 
 func_set_dirs() {
@@ -139,7 +140,7 @@ func_azure() {
       --azure-size $AZURE_SIZE \
       --azure-location $AZURE_LOCATION \
       --azure-ssh-user $AZURE_SSH_USER \
-      --azure-resouce-group $AZURE_RESOURCE_GROUP \
+      --azure-resource-group $AZURE_RESOURCE_GROUP \
       ${basename}${i}
 
     func_swarm_mgr
