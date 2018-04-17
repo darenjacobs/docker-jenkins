@@ -75,6 +75,7 @@ Use docker-machine rm DOCKER_MACHINE_NAME which will remove keypair from AWS
 
 TODO (AWS):
 * ~~Install aws-cli~~
+* ~~Install azure-cli~~
 * Automate the manual steps to sym link docker root directory
 * ~~[Tagging:](https://docs.aws.amazon.com/cli/latest/reference/ec2/create-tags.html) aws ec2 create-tags --resources ami-78a54011 --tags Key=Stack,Value=production~~
 * Cron job to test if Jenkins is running on primary zone nodes, if not spin up nodes on backup zone.
