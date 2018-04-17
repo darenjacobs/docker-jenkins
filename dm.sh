@@ -11,6 +11,7 @@ SWARM_PORT=2377
 swarm_manager=""
 nodes=${num_nodes:-3}
 
+
 func_set_dirs() {
   export root_dir=/vol1
   if ! [ -z ${AWS_AVAILABILITY_ZONE} ]; then
@@ -33,13 +34,28 @@ func_swarm_mgr() {
     fi
 }
 
+func_config_dirs() {
+
+  # Using one node (swarm manager) set up the docker directory which is shared by all docker machines
+  echo "CONFIGURING DOCKER DIRECTORY USING SWARM MANAGER $swarm_manager"
+  eval $(docker-machine env $swarm_manager)
+  docker-machine ssh $swarm_manager "if [ -d ${docker_dir} ]; then sudo rm -rf ${docker_dir}; fi && \
+    sudo mkdir -p ${jenkins_dir} ${workspace_dir} && \
+    sudo chown -R ubuntu:ubuntu ${docker_dir} && \
+    sudo chmod 777 ${workspace_dir} && \
+    exit"
+  docker-machine scp -r $HOME/.docker/machine/machines ${swarm_manager}:${docker_dir}
+}
+
+
 func_aws(){
 
   # Get AWS variables
   if [ -f aws-creds.sh ]; then
     source aws-creds.sh
   else
-    echo "AWS credentials file not found"
+    echo "AWS credentials file not found!"
+    echo "Exiting program"
     exit 1
   fi
 
@@ -51,7 +67,7 @@ func_aws(){
     efs_ip=$AWS_EFS_IP
     echo $efs_ip
   else
-    echo "Unable to obtain IP for EFS volume"
+    echo "Unable to obtain IP for EFS volume!"
     echo "Exiting program"
     exit 1
   fi
@@ -80,7 +96,7 @@ func_aws(){
   done
 
   # Mount EFS volume on all docker machines
-  echo "Mounting up EFS Volume on all docker machines"
+  echo "MOUNTING EFS VOLUME ON ALL DOCKER MACHINES"
   for (( i = 0; i < nodes; i++ ));
   do
     eval $(docker-machine env ${basename}${i})
@@ -93,16 +109,7 @@ func_aws(){
       exit"
   done
 
-  MAKE THIS A FUNCTION USE IT WITH BOTH
-  # Using one node (swarm manager) set up the docker directory which is shared by all docker machines
-  echo "Configuring docker directory using swarm manager $swarm_manager"
-  eval $(docker-machine env $swarm_manager)
-  docker-machine ssh $swarm_manager "if [ -d ${docker_dir} ]; then sudo rm -rf ${docker_dir}; fi && \
-    sudo mkdir -p ${jenkins_dir} ${workspace_dir} && \
-    sudo chown -R ubuntu:ubuntu ${docker_dir} && \
-    sudo chmod 777 ${workspace_dir} && \
-    exit"
-  docker-machine scp -r $HOME/.docker/machine/machines ${swarm_manager}:${docker_dir}
+  func_config_dirs
 
   THIS_ZONE=$AWS_AVAILABILITY_ZONE
 }
@@ -112,7 +119,8 @@ func_azure() {
   if [ -f azr-creds.sh ]; then
     source azr-creds.sh
   else
-    echo "Azure credentials file not found"
+    echo "Azure credentials file not found!"
+    echo "Exiting program"
     exit 1
   fi
 
@@ -131,13 +139,14 @@ func_azure() {
       --azure-size $AZURE_SIZE \
       --azure-location $AZURE_LOCATION \
       --azure-ssh-user $AZURE_SSH_USER \
+      --azure-resouce-group $AZURE_RESOURCE_GROUP \
       ${basename}${i}
 
     func_swarm_mgr
   done
 
   # Mount EFS volume on all docker machines
-  echo "Mounting up EFS Volume on all docker machines"
+  echo "MOUNTING CIFS VOLUME ON ALL DOCKER MACHINES"
   for (( i = 0; i < nodes; i++ ));
   do
     eval $(docker-machine env ${basename}${i})
@@ -150,16 +159,7 @@ func_azure() {
       exit"
   done
 
-  echo "Creating Docker directory on all nodes"
-  for (( i = 0; i < nodes; i++ ));
-  do
-    eval $(docker-machine env ${basename}${i})
-    docker-machine ssh ${basename}${i} "sudo mkdir -p ${jenkins_dir} ${workspace_dir} && \
-      sudo chown -R ubuntu ${docker_dir} && \
-      exit"
-    docker-machine scp -r $HOME/.docker/machine/machines ${basename}${i}:${docker_dir}
-  done
-
+  func_config_dirs
 }
 
 # check if argument is aws or azure
@@ -194,7 +194,7 @@ docker node ls
 # Join the nodes to the swarm
 TOKEN=$(docker swarm join-token -q manager)
 
-echo "Join nodes to swarm"
+echo "JOIN NODES TO SWARM"
 for (( i = 1; i < nodes; i++ ));
 do
   eval $(docker-machine env ${basename}${i})
