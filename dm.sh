@@ -14,10 +14,10 @@ nodes=${num_nodes:-3}
 
 func_set_dirs() {
   export root_dir=/vol1
-  if ! [ -z ${AWS_AVAILABILITY_ZONE} ]; then
-    export docker_dir=${root_dir}/docker_az${AWS_AVAILABILITY_ZONE}
-  else
+  if [ -z ${AWS_AVAILABILITY_ZONE} ]; then
     export docker_dir=${root_dir}/docker
+  else
+    export docker_dir=${root_dir}/docker_az${AWS_AVAILABILITY_ZONE}
   fi
   export workspace_dir=${docker_dir}/workspace
   export machines_dir=${docker_dir}/machines
