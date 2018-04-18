@@ -141,8 +141,9 @@ func_azure() {
       --azure-subscription-id $SUB_ID \
       --azure-size $AZURE_SIZE \
       --azure-location $AZURE_LOCATION \
-      --azure-ssh-user $AZURE_SSH_USER \
       --azure-resource-group $AZURE_RESOURCE_GROUP \
+      --azure-vnet $AZURE_VNET \
+      --azure-ssh-user $AZURE_SSH_USER \
       ${basename}${i}
 
     func_swarm_mgr
@@ -297,7 +298,7 @@ clear
 echo "######################################################" >> Docker-info.txt
 if ! [ -z $THIS_ZONE ]; then echo "# Availbility Zone: $THIS_ZONE                                #" >> Docker-info.txt; fi
 echo "# Visualizer: http://$viz_node                    #" >> Docker-info.txt
-echo "# Jenkins: http://${swarm_manager_ip}:8080/jenkins       #" >> Docker-info.txt
+echo "# Jenkins: http://${swarm_manager_ip}:8080/jenkins          #" >> Docker-info.txt
 echo "# Jenkins password: $PASSWORD #" >> Docker-info.txt
-echo "# Runtime: $runtime                                   #" >> Docker-info.txt
+echo "# Runtime: $runtime                                     #" >> Docker-info.txt
 echo "######################################################" >> Docker-info.txt
