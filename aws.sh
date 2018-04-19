@@ -7,7 +7,7 @@ do
   fi
   export zone=${zone}
   bash -x aws-creds.sh
-  bash -x dm.sh aws
+  bash -x dm.sh aws |& tee docker-install.log
   sleep 10
 done
 
