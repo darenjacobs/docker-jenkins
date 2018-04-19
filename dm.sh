@@ -45,7 +45,6 @@ func_config_dirs() {
   docker-machine ssh $swarm_manager "if [ -d ${docker_dir} ]; then sudo rm -rf ${docker_dir}; fi && \
     sudo mkdir -p ${jenkins_dir} ${workspace_dir} && \
     sudo chown -R ubuntu:ubuntu ${docker_dir} && \
-    sudo chmod 777 ${workspace_dir} && \
     exit"
   docker-machine scp -r $HOME/.docker/machine/machines ${swarm_manager}:${docker_dir}
 }
@@ -190,7 +189,7 @@ func_azure() {
   for (( i = 0; i < nodes; i++ ));
   do
     eval $(docker-machine env ${basename}${i})
-    docker-machine ssh ${basename}${i} "sudo apt-get install -y cifs-utils nfs-common && \
+    docker-machine ssh ${basename}${i} "sudo apt-get install -y cifs-utils && \
       sudo mkdir ${root_dir} && \
       sudo mount -t cifs ${AZURE_CIFS} ${root_dir} -o vers=3.0,username=${AZURE_STORAGE_ACCOUNT},password=${AZURE_STORAGE_KEY},dir_mode=0777,file_mode=0777,sec=ntlmssp
       sudo chmod o+w /etc/fstab && \ sudo echo '${AZURE_CIFS} ${root_dir} cifs -o vers=3.0,username=${AZURE_STORAGE_ACCOUNT},password=${AZURE_STORAGE_KEY},dir_mode=0777,file_mode=0777,sec=ntlmssp' >> /etc/fstab && \
