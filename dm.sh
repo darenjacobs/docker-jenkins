@@ -133,21 +133,26 @@ func_azure() {
   basename=lx-azr-dkr
 
   # Delete resource group
-  is_rg=$(az group exists --name $AZURE_RESOURCE_GROUP)
-  if [ "${is_rg}" == "true" ]; then
-    az group delete -n $AZURE_RESOURCE_GROUP -y --no-wait
-    sleep 120
-  fi
+  #is_rg=$(az group exists --name $AZURE_RESOURCE_GROUP)
+  #if [ "${is_rg}" == "true" ]; then
+  #  az group delete -n $AZURE_RESOURCE_GROUP -y --no-wait
+  #  sleep 120
+  #fi
 
   # Create docker cluster, set first one as manager
+      #--azure-private-ip-address 10.0.2.$(i+4)
+      #--azure-subnet-prefix $AZURE_SUBNET_PREFIX \
   echo "Creating Azure docker machines"
   for (( i = 0; i < nodes; i++ ));
   do
     docker-machine -D create --driver azure \
+      --azure-use-private-ip \
       --azure-subscription-id $SUB_ID \
+      --azure-resource-group $AZURE_RESOURCE_GROUP \
+      --azure-vnet $AZURE_VNET \
+      --azure-subnet default \
       --azure-size $AZURE_SIZE \
       --azure-location $AZURE_LOCATION \
-      --azure-resource-group $AZURE_RESOURCE_GROUP \
       --azure-ssh-user $AZURE_SSH_USER \
       ${basename}${i}
 
@@ -167,7 +172,7 @@ func_azure() {
     -l $AZURE_LOCATION \
     --sku $AZURE_STORAGE_ACCOUNT_SKU
 
-  sleep 120
+  sleep 60
 
   # Get Azure storage key
   AZURE_STORAGE_KEY=$(az storage account keys list \
@@ -182,13 +187,12 @@ func_azure() {
     --quota 512 \
     --name ${AZURE_FILE_SHARE}
 
-  sleep 120
+  sleep 60
 
   # Mount EFS volume on all docker machines
   echo "MOUNTING CIFS VOLUME ON ALL DOCKER MACHINES"
   for (( i = 0; i < nodes; i++ ));
   do
-    eval $(docker-machine env ${basename}${i})
     docker-machine ssh ${basename}${i} "sudo apt-get install -y cifs-utils && \
       sudo mkdir ${root_dir} && \
       sudo mount -t cifs ${AZURE_CIFS} ${root_dir} -o vers=3.0,username=${AZURE_STORAGE_ACCOUNT},password=${AZURE_STORAGE_KEY},dir_mode=0777,file_mode=0777,sec=ntlmssp && \
@@ -215,8 +219,6 @@ fi
 echo "Docker machine configuration : allow ubuntu user to run docker commands"
 for (( i = 0; i < nodes; i++ ));
 do
-  eval $(docker-machine env ${basename}${i})
-
   # enable ubuntu user to run docker commands
   docker-machine ssh ${basename}${i} "sudo usermod -aG docker ubuntu"
 
@@ -237,15 +239,7 @@ echo "JOIN NODES TO SWARM"
 for (( i = 1; i < nodes; i++ ));
 do
   eval $(docker-machine env ${basename}${i})
-  docker-machine ls
-
-
-  if [ $cloud_provider == "azure" ]; then
-    docker swarm join --token $TOKEN --advertise-addr $(docker-machine ip ${basename}${i}) $(docker-machine ip $swarm_manager):$SWARM_PORT
-    sleep 120
-  else
-    docker swarm join --token $TOKEN --advertise-addr $(docker-machine ip ${basename}${i}) $(docker-machine ip $swarm_manager):$SWARM_PORT
-  fi
+  docker swarm join --token $TOKEN --advertise-addr $(docker-machine ip ${basename}${i}) $(docker-machine ip $swarm_manager):$SWARM_PORT
 done
 
 # Install Docker visualizer on Swarm manager
