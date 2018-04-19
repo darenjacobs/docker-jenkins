@@ -136,7 +136,7 @@ func_azure() {
   is_rg=$(az group exists --name $AZURE_RESOURCE_GROUP)
   if [ "${is_rg}" == "true" ]; then
     az group delete -n $AZURE_RESOURCE_GROUP -y --no-wait
-    sleep 180
+    sleep 120
   fi
 
   # Create docker cluster, set first one as manager
