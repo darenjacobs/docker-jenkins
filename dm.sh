@@ -167,7 +167,7 @@ func_azure() {
     -l $AZURE_LOCATION \
     --sku $AZURE_STORAGE_ACCOUNT_SKU
 
-  sleep 180
+  sleep 120
 
   # Get Azure storage key
   AZURE_STORAGE_KEY=$(az storage account keys list \
@@ -182,7 +182,7 @@ func_azure() {
     --quota 512 \
     --name ${AZURE_FILE_SHARE}
 
-  sleep 180
+  sleep 120
 
   # Mount EFS volume on all docker machines
   echo "MOUNTING CIFS VOLUME ON ALL DOCKER MACHINES"
@@ -191,8 +191,9 @@ func_azure() {
     eval $(docker-machine env ${basename}${i})
     docker-machine ssh ${basename}${i} "sudo apt-get install -y cifs-utils && \
       sudo mkdir ${root_dir} && \
-      sudo mount -t cifs ${AZURE_CIFS} ${root_dir} -o vers=3.0,username=${AZURE_STORAGE_ACCOUNT},password=${AZURE_STORAGE_KEY},dir_mode=0777,file_mode=0777,sec=ntlmssp
-      sudo chmod o+w /etc/fstab && \ sudo echo '${AZURE_CIFS} ${root_dir} cifs -o vers=3.0,username=${AZURE_STORAGE_ACCOUNT},password=${AZURE_STORAGE_KEY},dir_mode=0777,file_mode=0777,sec=ntlmssp' >> /etc/fstab && \
+      sudo mount -t cifs ${AZURE_CIFS} ${root_dir} -o vers=3.0,username=${AZURE_STORAGE_ACCOUNT},password=${AZURE_STORAGE_KEY},dir_mode=0777,file_mode=0777,sec=ntlmssp && \
+      sudo chmod o+w /etc/fstab && \
+      sudo echo '${AZURE_CIFS} ${root_dir} cifs -o vers=3.0,username=${AZURE_STORAGE_ACCOUNT},password=${AZURE_STORAGE_KEY},dir_mode=0777,file_mode=0777,sec=ntlmssp' >> /etc/fstab && \
       sudo chmod o-w /etc/fstab && \
       exit"
   done
