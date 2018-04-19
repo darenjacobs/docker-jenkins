@@ -140,8 +140,6 @@ func_azure() {
   #fi
 
   # Create docker cluster, set first one as manager
-      #--azure-private-ip-address 10.0.2.$(i+4)
-      #--azure-subnet-prefix $AZURE_SUBNET_PREFIX \
   echo "Creating Azure docker machines"
   for (( i = 0; i < nodes; i++ ));
   do
@@ -162,7 +160,7 @@ func_azure() {
   # check if storage account name is valid and available
   is_san=$(az storage account check-name -n ${AZURE_STORAGE_ACCOUNT} |jq '.nameAvailable')
   if [ "${is_san}" != "true" ]; then
-    AZURE_STORAGE_ACCOUNT=${AZURE_STORAGE_ACCOUNT}123
+    AZURE_STORAGE_ACCOUNT=${AZURE_STORAGE_ACCOUNT}$(( RANDOM % 1000 ))
   fi
 
   # Create Azure storage account
@@ -279,26 +277,31 @@ docker stack deploy -c docker-compose.yml jenkins
 
 # Set docker root owner to ubuntu/jenkins:
 eval $(docker-machine env $swarm_manager)
-docker-machine ssh $swarm_manager sudo chown -R ubuntu:ubuntu ${docker_dir}
+if [ $cloud_provider != "azure" ]; then
+  docker-machine ssh $swarm_manager "sudo chown -R ubuntu:ubuntu ${docker_dir}"
+fi
 
 # Make Docker fault tolerant
-eval $(docker-machine env $swarm_manager)
 NODE=$(docker service ps -f desired-state=running jenkins_jenkins | tail -1 | awk '{print $4}')
 
 # Get Admin Password if jpass is not set
 if [ -z $jpass ]; then
   # Give it time to install plugins, amount of time is iffy.
-  sleep 240
+  if [ $cloud_provider == "azure" ]; then
+    sleep 480
+  else
+    sleep 240
+  fi
 
   echo "Getting admin password"
-  eval $(docker-machine env $NODE)
-  file=$(docker-machine ssh $NODE "sudo find ${jenkins_dir} -name 'initialAdminPassword'")
+  eval $(docker-machine env ${NODE})
+  file=$(docker-machine ssh ${NODE} "sudo find ${jenkins_dir} -name 'initialAdminPassword'")
   while [ -z $file ]
   do
     sleep 20
-    file=$(docker-machine ssh $NODE "sudo find ${jenkins_dir} -name 'initialAdminPassword'")
+    file=$(docker-machine ssh ${NODE} "sudo find ${jenkins_dir} -name 'initialAdminPassword'")
   done
-  secret=$(docker-machine ssh $NODE "sudo cat $file")
+  secret=$(docker-machine ssh ${NODE} "sudo cat $file")
 fi
 
 # Jenkins Agent
