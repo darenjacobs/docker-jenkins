@@ -51,7 +51,7 @@ func_config_dirs() {
 }
 
 
-func_aws(){
+func_aws() {
 
   # Get AWS variables
   if [ -f aws-creds.sh ]; then
@@ -133,6 +133,13 @@ func_azure() {
   # Set basename for nodes in cluster
   basename=lx-azr-dkr
 
+  # Delete resource group
+  is_rg=$(az group exists --name $AZURE_RESOURCE_GROUP)
+  if [ "${is_rg}" == "true" ]; then
+    az group delete -n $AZURE_RESOURCE_GROUP -y --no-wait
+    sleep 180
+  fi
+
   # Create docker cluster, set first one as manager
   echo "Creating Azure docker machines"
   for (( i = 0; i < nodes; i++ ));
@@ -142,12 +149,41 @@ func_azure() {
       --azure-size $AZURE_SIZE \
       --azure-location $AZURE_LOCATION \
       --azure-resource-group $AZURE_RESOURCE_GROUP \
-      --azure-vnet $AZURE_VNET \
       --azure-ssh-user $AZURE_SSH_USER \
       ${basename}${i}
 
     func_swarm_mgr
   done
+
+  # check if storage account name is valid and available
+  is_san=$(az storage account check-name -n ${AZURE_STORAGE_ACCOUNT} |jq '.nameAvailable')
+  if [ "${is_san}" != "true" ]; then
+    AZURE_STORAGE_ACCOUNT=${AZURE_STORAGE_ACCOUNT}123
+  fi
+
+  # Create Azure storage account
+  az storage account create \
+    -n $AZURE_STORAGE_ACCOUNT \
+    -g $AZURE_RESOURCE_GROUP \
+    -l $AZURE_LOCATION \
+    --sku $AZURE_STORAGE_ACCOUNT_SKU
+
+  sleep 180
+
+  # Get Azure storage key
+  AZURE_STORAGE_KEY=$(az storage account keys list \
+    --resource-group $AZURE_RESOURCE_GROUP \
+    --account-name $AZURE_STORAGE_ACCOUNT \
+    --query "[0].value" | tr -d '"')
+
+  # Create an Azure file share
+  az storage share create \
+    --account-name $AZURE_STORAGE_ACCOUNT \
+    --account-key $AZURE_STORAGE_KEY \
+    --quota 512 \
+    --name ${AZURE_FILE_SHARE}
+
+  sleep 180
 
   # Mount EFS volume on all docker machines
   echo "MOUNTING CIFS VOLUME ON ALL DOCKER MACHINES"
@@ -156,9 +192,8 @@ func_azure() {
     eval $(docker-machine env ${basename}${i})
     docker-machine ssh ${basename}${i} "sudo apt-get install -y cifs-utils nfs-common && \
       sudo mkdir ${root_dir} && \
-      sudo mount -t cifs ${AZURE_CIFS} ${root_dir} -o vers=3.0,username=${AZURE_MOUNT_USER},password=${AZURE_MOUNT_PASS},dir_mode=0777,file_mode=0777,sec=ntlmssp
-      sudo chmod o+w /etc/fstab && \
-      sudo echo '${AZURE_CIFS} ${root_dir} cifs -o vers=3.0,username=${AZURE_MOUNT_USER},password=${AZURE_MOUNT_PASS},dir_mode=0777,file_mode=0777,sec=ntlmssp' >> /etc/fstab && \
+      sudo mount -t cifs ${AZURE_CIFS} ${root_dir} -o vers=3.0,username=${AZURE_STORAGE_ACCOUNT},password=${AZURE_STORAGE_KEY},dir_mode=0777,file_mode=0777,sec=ntlmssp
+      sudo chmod o+w /etc/fstab && \ sudo echo '${AZURE_CIFS} ${root_dir} cifs -o vers=3.0,username=${AZURE_STORAGE_ACCOUNT},password=${AZURE_STORAGE_KEY},dir_mode=0777,file_mode=0777,sec=ntlmssp' >> /etc/fstab && \
       sudo chmod o-w /etc/fstab && \
       exit"
   done
@@ -206,8 +241,8 @@ do
 
 
   if [ $cloud_provider == "azure" ]; then
-    docker swarm join --token $TOKEN --advertise-addr $(docker-machine ip ${basename}${i}) $(docker-machine ip $swarm_manager):$SWARM_PORT || true
-    sleep 10
+    docker swarm join --token $TOKEN --advertise-addr $(docker-machine ip ${basename}${i}) $(docker-machine ip $swarm_manager):$SWARM_PORT
+    sleep 120
   else
     docker swarm join --token $TOKEN --advertise-addr $(docker-machine ip ${basename}${i}) $(docker-machine ip $swarm_manager):$SWARM_PORT
   fi
@@ -272,7 +307,6 @@ if [ -z $jpass ]; then
   secret=$(docker-machine ssh $NODE "sudo cat $file")
 fi
 
-nodes=${num_nodes:-3}
 # Jenkins Agent
 echo "Create Jenkins Agent Service"
 export USER=admin && export PASSWORD=${jpass:-$secret}
