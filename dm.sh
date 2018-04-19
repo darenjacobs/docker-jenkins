@@ -282,7 +282,10 @@ if [ $cloud_provider != "azure" ]; then
 fi
 
 # Make Docker fault tolerant
-NODE=$(docker service ps -f desired-state=running jenkins_jenkins | tail -1 | awk '{print $4}')
+NODE=$(docker service ps -f desired-state=running jenkins_jenkins | tail -1 | awk '{print $4}') # for some reason azure sets this variable to the title "NODE" instead of the server's hostname
+if [ "${NODE}" == "NODE" ]; then
+  NODE=${swarm_manager}
+fi
 
 # Get Admin Password if jpass is not set
 if [ -z $jpass ]; then
