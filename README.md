@@ -1,8 +1,8 @@
 # docker-jenkins
 ```
 Deploy instructions:
-AWS: ./aws.sh |& tee docker-install.log
-AZURE: ./azr.sh |& tee docker-install.log
+AWS: ./aws.sh
+AZURE: ./azr.sh
 
 This will spin up a Docker swarm of 3 servers and Install
 * 1 Jenkins master on the swarm manager
