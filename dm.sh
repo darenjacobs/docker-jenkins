@@ -160,7 +160,7 @@ func_azure() {
   # check if storage account name is valid and available
   is_san=$(az storage account check-name -n ${AZURE_STORAGE_ACCOUNT} |jq '.nameAvailable')
   if [ "${is_san}" != "true" ]; then
-    AZURE_STORAGE_ACCOUNT=${AZURE_STORAGE_ACCOUNT}$(( RANDOM % 1000 ))
+    AZURE_STORAGE_ACCOUNT=${AZURE_STORAGE_ACCOUNT}$RANDOM
   fi
 
   # Create Azure storage account
