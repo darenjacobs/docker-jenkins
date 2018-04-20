@@ -247,7 +247,7 @@ docker service create \
   dockersamples/visualizer
 
 viz_node=$(docker service ps viz | tail -1 | awk '{print $4}')
-viz_node=$(docker-machine ip $viz_node)
+viz_ip=$(docker-machine ip $viz_node)
 
 echo "create registry service"
 eval $(docker-machine env $swarm_manager)
@@ -329,7 +329,7 @@ runtime=$(python -c "print '%u:%02u' % ((${end} - ${start})/60, (${end} - ${star
 clear
 echo "######################################################" >> Docker-info.txt
 if ! [ -z $THIS_ZONE ]; then echo "# Availbility Zone: $THIS_ZONE                                #" >> Docker-info.txt; fi
-echo "# Visualizer: http://$viz_node                        #" >> Docker-info.txt
+echo "# Visualizer: http://$viz_ip                      #" >> Docker-info.txt
 echo "# Jenkins: http://${swarm_manager_ip}:8080/jenkins              #" >> Docker-info.txt
 echo "# Jenkins password: $PASSWORD #" >> Docker-info.txt
 echo "# Runtime: $runtime                                     #" >> Docker-info.txt
