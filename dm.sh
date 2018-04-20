@@ -288,7 +288,7 @@ if [ -z $jpass ]; then
   # Give it time to install plugins, amount of time is iffy.
   if [ $cloud_provider == "azure" ]; then
     az vm open-port --resource-group $AZURE_RESOURCE_GROUP --name $viz_node --port $VIZ_PORT
-    az vm open-port --resource-group $AZURE_RESOURCE_GROUP --name $swarm_manager --port $JENKINS_PORT
+    az vm open-port --resource-group $AZURE_RESOURCE_GROUP --priority 901 --name $swarm_manager --port $JENKINS_PORT
     sleep 900
   else
     sleep 240
