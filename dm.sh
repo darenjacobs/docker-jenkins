@@ -170,8 +170,6 @@ func_azure() {
     -l $AZURE_LOCATION \
     --sku $AZURE_STORAGE_ACCOUNT_SKU
 
-  sleep 60
-
   # Get Azure storage key
   AZURE_STORAGE_KEY=$(az storage account keys list \
     --resource-group $AZURE_RESOURCE_GROUP \
@@ -184,8 +182,6 @@ func_azure() {
     --account-key $AZURE_STORAGE_KEY \
     --quota 512 \
     --name ${AZURE_FILE_SHARE}
-
-  sleep 60
 
   # Mount EFS volume on all docker machines
   echo "MOUNTING CIFS VOLUME ON ALL DOCKER MACHINES"
@@ -291,7 +287,9 @@ fi
 if [ -z $jpass ]; then
   # Give it time to install plugins, amount of time is iffy.
   if [ $cloud_provider == "azure" ]; then
-    sleep 480
+    az vm open-port --resource-group $AZURE_RESOURCE_GROUP --name $viz_node --port $VIZ_PORT
+    az vm open-port --resource-group $AZURE_RESOURCE_GROUP --name $swarm_manager --port $JENKINS_PORT
+    sleep 900
   else
     sleep 240
   fi
@@ -331,8 +329,8 @@ runtime=$(python -c "print '%u:%02u' % ((${end} - ${start})/60, (${end} - ${star
 clear
 echo "######################################################" >> Docker-info.txt
 if ! [ -z $THIS_ZONE ]; then echo "# Availbility Zone: $THIS_ZONE                                #" >> Docker-info.txt; fi
-echo "# Visualizer: http://$viz_node                    #" >> Docker-info.txt
-echo "# Jenkins: http://${swarm_manager_ip}:8080/jenkins          #" >> Docker-info.txt
+echo "# Visualizer: http://$viz_node                        #" >> Docker-info.txt
+echo "# Jenkins: http://${swarm_manager_ip}:8080/jenkins              #" >> Docker-info.txt
 echo "# Jenkins password: $PASSWORD #" >> Docker-info.txt
 echo "# Runtime: $runtime                                     #" >> Docker-info.txt
 echo "######################################################" >> Docker-info.txt
