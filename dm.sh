@@ -37,6 +37,39 @@ func_swarm_mgr() {
     fi
 }
 
+func_mount_nfs() {
+
+  # Mount NFS volume on all docker machines
+  if [ $cloud_provider == "aws" ]; then
+    array=("EFS" "nfs-common" "nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 ${efs_ip}:/ ${root_dir}" "${efs_ip}:/ ${root_dir} nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 0 0")
+  elif [ $cloud_provider == "azure" ]; then
+    array=("CIFS" "cifs-utils" "cifs ${AZURE_CIFS} ${root_dir} -o vers=3.0,username=${AZURE_STORAGE_ACCOUNT},password=${AZURE_STORAGE_KEY},dir_mode=0777,file_mode=0777,sec=ntlmssp" "${AZURE_CIFS} ${root_dir} cifs -o vers=3.0,username=${AZURE_STORAGE_ACCOUNT},password=${AZURE_STORAGE_KEY},dir_mode=0777,file_mode=0777,sec=ntlmssp")
+  else
+    echo "cloud provider not found!"
+    echo "exiting program!"
+    exit 1
+  fi
+
+  # vars
+  type=${array[0]}
+  app=${array[1]}
+  mount_str=${array[2]}
+  fstab_str=${array[3]}
+
+  echo "MOUNTING $type VOLUME ON ALL DOCKER MACHINES"
+  for (( i = 0; i < nodes; i++ ));
+  do
+    eval $(docker-machine env ${basename}${i})
+    docker-machine ssh ${basename}${i} "sudo apt-get install -y $app && \
+      sudo mkdir ${root_dir} && \
+      sudo mount -t ${mount_str} && \
+      sudo chmod o+w /etc/fstab && \
+      sudo echo '${fstab_str}' >> /etc/fstab && \
+      sudo chmod o-w /etc/fstab && \
+      exit"
+  done
+}
+
 func_config_dirs() {
 
   # Using one node (swarm manager) set up the docker directory which is shared by all docker machines
@@ -97,20 +130,7 @@ func_aws() {
     func_swarm_mgr
   done
 
-  # Mount EFS volume on all docker machines
-  echo "MOUNTING EFS VOLUME ON ALL DOCKER MACHINES"
-  for (( i = 0; i < nodes; i++ ));
-  do
-    eval $(docker-machine env ${basename}${i})
-    docker-machine ssh ${basename}${i} "sudo apt-get install -y nfs-common && \
-      sudo mkdir ${root_dir} && \
-      sudo mount -t nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 ${efs_ip}:/ ${root_dir} && \
-      sudo chmod o+w /etc/fstab && \
-      sudo echo '${efs_ip}:/ ${root_dir} nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 0 0' >> /etc/fstab && \
-      sudo chmod o-w /etc/fstab && \
-      exit"
-  done
-
+  func_mount_nfs
   func_config_dirs
 
   THIS_ZONE=$AWS_AVAILABILITY_ZONE
@@ -183,19 +203,7 @@ func_azure() {
     --quota 512 \
     --name ${AZURE_FILE_SHARE}
 
-  # Mount EFS volume on all docker machines
-  echo "MOUNTING CIFS VOLUME ON ALL DOCKER MACHINES"
-  for (( i = 0; i < nodes; i++ ));
-  do
-    docker-machine ssh ${basename}${i} "sudo apt-get install -y cifs-utils && \
-      sudo mkdir ${root_dir} && \
-      sudo mount -t cifs ${AZURE_CIFS} ${root_dir} -o vers=3.0,username=${AZURE_STORAGE_ACCOUNT},password=${AZURE_STORAGE_KEY},dir_mode=0777,file_mode=0777,sec=ntlmssp && \
-      sudo chmod o+w /etc/fstab && \
-      sudo echo '${AZURE_CIFS} ${root_dir} cifs -o vers=3.0,username=${AZURE_STORAGE_ACCOUNT},password=${AZURE_STORAGE_KEY},dir_mode=0777,file_mode=0777,sec=ntlmssp' >> /etc/fstab && \
-      sudo chmod o-w /etc/fstab && \
-      exit"
-  done
-
+  func_mount_nfs
   func_config_dirs
 }
 
