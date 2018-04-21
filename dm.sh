@@ -28,17 +28,15 @@ func_set_dirs() {
 }
 
 func_swarm_mgr() {
-
-    # Set the first node to the swarm manager
-    if [ -z $swarm_manager ];
-    then
-      echo "Setting swarm manager to ${basename}${i}"
-      swarm_manager=${basename}${i}
-    fi
+  # Set the first node to the swarm manager
+  if [ -z $swarm_manager ];
+  then
+    echo "Setting swarm manager to ${basename}${i}"
+    swarm_manager=${basename}${i}
+  fi
 }
 
 func_mount_nfs() {
-
   # Mount NFS volume on all docker machines
   if [ $cloud_provider == "aws" ]; then
     array=("EFS" "nfs-common" "nfs4 -o nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 ${efs_ip}:/ ${root_dir}" "${efs_ip}:/ ${root_dir} nfs4 nfsvers=4.1,rsize=1048576,wsize=1048576,hard,timeo=600,retrans=2 0 0")
@@ -71,7 +69,6 @@ func_mount_nfs() {
 }
 
 func_config_dirs() {
-
   # Using one node (swarm manager) set up the docker directory which is shared by all docker machines
   echo "CONFIGURING DOCKER DIRECTORY USING SWARM MANAGER $swarm_manager"
   eval $(docker-machine env $swarm_manager)
@@ -84,7 +81,6 @@ func_config_dirs() {
 
 
 func_aws() {
-
   # Get AWS variables
   if [ -f aws-creds.sh ]; then
     source aws-creds.sh
@@ -137,7 +133,6 @@ func_aws() {
 }
 
 func_azure() {
-
   if [ -f azr-creds.sh ]; then
     source azr-creds.sh
   else
