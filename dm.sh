@@ -10,7 +10,7 @@ VIZ_PORT=80
 SWARM_PORT=2377
 swarm_manager=""
 nodes=${num_nodes:-3}
-AWS_AVAILABILITY_ZONE=${AWS_AVAILABILITY_ZONE:-} # this bothers me but set dirs func breaks Azure func
+AWS_AVAILABILITY_ZONE=${AWS_AVAILABILITY_ZONE:-}
 jpass=${jpass:-}
 THIS_ZONE=${THIS_ZONE:-}
 
