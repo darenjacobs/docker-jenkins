@@ -195,7 +195,7 @@ func_azure() {
   az storage share create \
     --account-name $AZURE_STORAGE_ACCOUNT \
     --account-key $AZURE_STORAGE_KEY \
-    --quota 512 \
+    --quota $AZURE_QUOTA \
     --name ${AZURE_FILE_SHARE}
 
   func_mount_nfs
@@ -321,6 +321,11 @@ docker service create \
   --mount "type=bind,src=${machines_dir},target=/machines" \
   --mode global darenjacobs/jenkins-swarm-agent:0.04
 
+# Get public IPs for Azure nodes
+if [ $cloud_provider == "aws"]; then
+  swarm_manager_ip=$(az vm list-ip-addresses -n ${swarm_manager} --query [0].virtualMachine.network.publicIpAddresses[0].ipAddress -o tsv)
+  viz_ip=$(az vm list-ip-addresses -n $viz_node --query [0].virtualMachine.network.publicIpAddresses[0].ipAddress -o tsv)
+fi
 
 # Display / Log access info
 if ! [ -f Docker-info.txt ]; then
