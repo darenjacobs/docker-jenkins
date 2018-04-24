@@ -290,6 +290,9 @@ fi
 if [ -z $jpass ]; then
   # Give it time to install plugins, amount of time is iffy.
   if [ $cloud_provider == "azure" ]; then
+    # Use public IP and open ports
+    viz_ip=$(az vm list-ip-addresses -n ${viz_node} --query [0].virtualMachine.network.publicIpAddresses[0].ipAddress -o tsv)
+    swarm_manager_ip=$(az vm list-ip-addresses -n ${swarm_manager} --query [0].virtualMachine.network.publicIpAddresses[0].ipAddress -o tsv)
     az vm open-port --resource-group $AZURE_RESOURCE_GROUP --name $viz_node --port $VIZ_PORT
     az vm open-port --resource-group $AZURE_RESOURCE_GROUP --priority 901 --name $swarm_manager --port $JENKINS_PORT
     sleep 900
@@ -321,12 +324,6 @@ docker service create \
   --mount "type=bind,src=${machines_dir},target=/machines" \
   --mode global darenjacobs/jenkins-swarm-agent:0.04
 
-# Get public IPs for Azure nodes
-if [ $cloud_provider == "aws" ]; then
-  swarm_manager_ip=$(az vm list-ip-addresses -n ${swarm_manager} --query [0].virtualMachine.network.publicIpAddresses[0].ipAddress -o tsv)
-  viz_ip=$(az vm list-ip-addresses -n $viz_node --query [0].virtualMachine.network.publicIpAddresses[0].ipAddress -o tsv)
-fi
-
 # Display / Log access info
 if ! [ -f Docker-info.txt ]; then
   touch Docker-info.txt
@@ -337,8 +334,8 @@ runtime=$(python -c "print '%u:%02u' % ((${end} - ${start})/60, (${end} - ${star
 clear
 echo "######################################################" >> Docker-info.txt
 if ! [ -z $THIS_ZONE ]; then echo "# Availbility Zone: $THIS_ZONE                                #" >> Docker-info.txt; fi
-echo "# Visualizer: http://$viz_ip                        #" >> Docker-info.txt
-echo "# Jenkins: http://${swarm_manager_ip}:8080/jenkins              #" >> Docker-info.txt
+echo "# Visualizer: http://$viz_ip                  #" >> Docker-info.txt
+echo "# Jenkins: http://${swarm_manager_ip}:8080/jenkins        #" >> Docker-info.txt
 echo "# Jenkins password: $PASSWORD #" >> Docker-info.txt
 echo "# Runtime: $runtime                                     #" >> Docker-info.txt
 echo "######################################################" >> Docker-info.txt
