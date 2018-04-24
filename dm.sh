@@ -322,7 +322,7 @@ docker service create \
   --mode global darenjacobs/jenkins-swarm-agent:0.04
 
 # Get public IPs for Azure nodes
-if [ $cloud_provider == "aws"]; then
+if [ $cloud_provider == "aws" ]; then
   swarm_manager_ip=$(az vm list-ip-addresses -n ${swarm_manager} --query [0].virtualMachine.network.publicIpAddresses[0].ipAddress -o tsv)
   viz_ip=$(az vm list-ip-addresses -n $viz_node --query [0].virtualMachine.network.publicIpAddresses[0].ipAddress -o tsv)
 fi
