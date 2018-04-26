@@ -90,7 +90,7 @@ func_aws() {
     exit 1
   fi
 
-  # Set root (EFS) and jenkins related directories
+  # Set root structure and jenkins related directories
   func_set_dirs
 
   # Cannot use DNS name for EFS. Must get IP address
@@ -126,6 +126,7 @@ func_aws() {
     func_swarm_mgr
   done
 
+  # Mount EFS volume
   func_mount_nfs
   func_config_dirs
 
@@ -141,7 +142,7 @@ func_azure() {
     exit 1
   fi
 
-  # Set root (EFS) and jenkins related directories
+  # Set root structure and jenkins related directories
   func_set_dirs
 
   # Set basename for nodes in cluster
@@ -198,6 +199,7 @@ func_azure() {
     --quota $AZURE_QUOTA \
     --name ${AZURE_FILE_SHARE}
 
+  # Mount CIFS volume
   func_mount_nfs
   func_config_dirs
 }
