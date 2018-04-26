@@ -1,3 +1,4 @@
 aws-creds.sh
 azr-creds.sh
+*.tgz
 *.log
