@@ -148,11 +148,11 @@ func_azure() {
   basename=lx-azr-dkr
 
   # Delete resource group
-  #is_rg=$(az group exists --name $AZURE_RESOURCE_GROUP)
-  #if [ "${is_rg}" == "true" ]; then
-  #  az group delete -n $AZURE_RESOURCE_GROUP -y --no-wait
-  #  sleep 120
-  #fi
+  is_rg=$(az group exists --name $AZURE_RESOURCE_GROUP)
+  if [ "${is_rg}" == "true" ]; then
+    az group delete -n $AZURE_RESOURCE_GROUP -y --no-wait
+    sleep 120
+  fi
 
   # Create docker cluster, set first one as manager
   echo "Creating Azure docker machines"
@@ -276,9 +276,7 @@ docker stack deploy -c docker-compose.yml jenkins
 
 # Set docker root owner to ubuntu/jenkins:
 eval $(docker-machine env $swarm_manager)
-if [ $cloud_provider != "azure" ]; then
-  docker-machine ssh $swarm_manager "sudo chown -R ubuntu:ubuntu ${docker_dir}"
-fi
+docker-machine ssh $swarm_manager "sudo chown -R ubuntu:ubuntu ${docker_dir}"
 
 # Make Docker fault tolerant
 NODE=$(docker service ps -f desired-state=running jenkins_jenkins | tail -1 | awk '{print $4}') # for some reason azure sets this variable to the title "NODE" instead of the server's hostname
@@ -295,7 +293,7 @@ if [ -z $jpass ]; then
     swarm_manager_ip=$(az vm list-ip-addresses -n ${swarm_manager} --query [0].virtualMachine.network.publicIpAddresses[0].ipAddress -o tsv)
     az vm open-port --resource-group $AZURE_RESOURCE_GROUP --name $viz_node --port $VIZ_PORT
     az vm open-port --resource-group $AZURE_RESOURCE_GROUP --priority 901 --name $swarm_manager --port $JENKINS_PORT
-    sleep 900
+    sleep 600
   else
     sleep 240
   fi
