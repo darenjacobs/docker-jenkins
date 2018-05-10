@@ -1,6 +1,13 @@
 #!/bin/sh
 
 export SUB_ID=
-export AZURE_SIZE=Standard_B1s
-export AZURE_LOCATION=eastus
-export AZURE_SSH_USER=ubuntu
+export AZURE_SIZE=
+export AZURE_LOCATION=
+export AZURE_SSH_USER=
+export AZURE_RESOURCE_GROUP=
+export AZURE_VNET=${AZURE_RESOURCE_GROUP}-vnet
+export AZURE_STORAGE_ACCOUNT=
+export AZURE_FILE_SHARE=
+export AZURE_CIFS=//${AZURE_STORAGE_ACCOUNT}.file.core.windows.net/${AZURE_FILE_SHARE}
+export AZURE_STORAGE_ACCOUNT_SKU=
+export AZURE_QUOTA=

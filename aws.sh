@@ -11,11 +11,10 @@ do
   sleep 10
 done
 
-if [ -f post-install.sh ]; then
-  . post-install.sh
-  func_tag_instances
-  func_mount_efs
-  func_config_zone
+sleep 60
+if [ -f aws-post-install.sh ]; then
+  bash -x aws-post-install.sh
 else
   echo "Post install file not found"
 fi
+cat Docker-info.txt

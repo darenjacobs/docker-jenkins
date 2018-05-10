@@ -6,6 +6,11 @@ services:
     ports:
       - '8080:8080'
       - '50000:50000'
+    dns:
+      - ${dns1}
+      - ${dns2}
+    dns_search:
+      - ${search_domain}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ${workspace_dir}:/workspace
