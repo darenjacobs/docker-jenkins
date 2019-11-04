@@ -20,17 +20,6 @@ and the Jenkins admin user secret
 ```
 
 ## Jenkins Configuration:
-**NOTA BENE:** The one manual step:  After installation completes JENKINS_HOME should be pointed to /vol1/docker/jenkins by way of symbolic link.  I.e., e.g. with AWS zone A, /vol1/docker_aza should be a sym link to /vol1/docker
-> To do this:
- 1. In the AWS console stop the nodes in the zone(For Zone A): stop lx-dkrad0 lx-dkrad1, lxdkrad2
- 2. SSH to one of the nodes in any other zone; docker-machine ssh lx-dkrbd0
- 3. sudo rm -rf /vol1/docker_aza ; sudo ln -s /vol1/docker /vol1/docker_aza
- 4. Start the nodes from the AWS console
- 5. Repeat this for Zones B and C
-For new environments with a new EFS/NFS volume:
-Log in using the admin password from Docker-info.txt and install suggested plugins.  Do not change the password. If the password changed you'll need to stop the jenkins agent, "docker service rm jenkins-agent", and create it again.
-
-See "Create Jenkins Agent Service" section of dm.sh.
 
 ## Environment variables:
 ```
