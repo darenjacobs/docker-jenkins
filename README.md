@@ -7,7 +7,7 @@ or
 
 This will spin up a Docker swarm of 3 servers and Install
 * 1 Jenkins leader on the swarm manager
-* 3 Jenkings agents (worker nodes), one per server
+* 3 Jenkins agents (worker nodes), one per server
 * 1 Docker registry
 * 1 Visualizer - a visual representation of services in the Docker swarm
 IN ZONES A, B and C
